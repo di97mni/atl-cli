@@ -15,6 +15,8 @@ var rootCmd = &cobra.Command{
 that supports querying Jira issues and Confluence pages.
 
 All output is JSON to stdout, errors to stderr.`,
+	SilenceUsage:  true,
+	SilenceErrors: true,
 }
 
 func init() {
