@@ -5,6 +5,16 @@
 **Status**: Draft
 **Input**: User description: "atl-cli v1 core commands: jira issue get, confluence page get, and doctor"
 
+## Clarifications
+
+### Session 2026-01-26
+
+- Q: How should the CLI handle API request timeouts? → A: Fail after single timeout (30s) with clear error message
+- Q: When API returns rate limit (429), should CLI auto-retry or report error? → A: Report error with retry-after info; user handles retry
+- Q: For Confluence page content, return storage format, plain text, or both? → A: Storage format only (raw Atlassian markup)
+- Q: Should CLI use distinct exit codes for different error types? → A: Single exit code (1) for all errors; error type in JSON output
+- Q: For Jira issue description, what format should be returned? → A: Plain text only (extracted from ADF)
+
 ## User Scenarios & Testing *(mandatory)*
 
 ### User Story 1 - Fetch Jira Issue Details (Priority: P1)
@@ -63,8 +73,8 @@ A user setting up atl-cli for the first time wants to verify their configuration
 
 ### Edge Cases
 
-- What happens when the Atlassian API is temporarily unavailable? System outputs a JSON error with connection timeout or service unavailable message.
-- What happens when the API rate limit is exceeded? System outputs a JSON error indicating rate limiting with retry-after information if provided.
+- What happens when the Atlassian API is temporarily unavailable or slow? System enforces 30-second timeout and outputs a JSON error with timeout or service unavailable message; no automatic retries.
+- What happens when the API rate limit is exceeded? System outputs a JSON error indicating rate limiting with retry-after value (in seconds) if provided by API; no automatic retry.
 - What happens when the issue key format is invalid (e.g., "123" instead of "PROJ-123")? System outputs a JSON error indicating invalid issue key format.
 - What happens when --debug flag is used? System outputs request details (URL, status, headers) to stderr with Authorization header redacted, then normal output to stdout.
 
@@ -77,16 +87,17 @@ A user setting up atl-cli for the first time wants to verify their configuration
 - **FR-003**: System MUST output all errors as JSON to stderr with `error` and `message` fields
 - **FR-004**: System MUST validate that required environment variables are present before making API calls
 - **FR-005**: System MUST support the `--debug` flag to output request/response details with redacted authentication
-- **FR-006**: System MUST return a non-zero exit code on any error
+- **FR-006**: System MUST return exit code 1 on any error (single code for all error types; specific error type provided in JSON output)
 - **FR-007**: System MUST NEVER print, log, or expose the ATLASSIAN_TOKEN value
-- **FR-008**: Jira issue get MUST return: key, summary, status, assignee (or null), priority (or null), created, updated, description (raw and text), and URL
+- **FR-008**: Jira issue get MUST return: key, summary, status, assignee (or null), priority (or null), created, updated, description (plain text extracted from ADF), and URL
 - **FR-009**: Confluence page get MUST return: id, title, space key, version number, last updated timestamp, and body (storage format)
 - **FR-010**: Doctor command MUST check: presence of all required environment variables, Jira API connectivity, Confluence API connectivity
 - **FR-011**: System MUST use HTTPS for all API requests
+- **FR-012**: System MUST enforce a 30-second timeout on all API requests and fail immediately (no retry) with a JSON error indicating timeout
 
 ### Key Entities
 
-- **JiraIssue**: Represents a Jira issue with key, summary, status name, assignee display name, priority name, timestamps, description (ADF raw format and plain text), and browse URL
+- **JiraIssue**: Represents a Jira issue with key, summary, status name, assignee display name, priority name, timestamps, description (plain text extracted from ADF), and browse URL
 - **ConfluencePage**: Represents a Confluence page with numeric ID, title, space key, version number, last modified timestamp, and body content in storage format
 - **DoctorResult**: Represents the health check results with environment variable status, Jira connectivity status, Confluence connectivity status, and any error messages
 - **Config**: Represents the runtime configuration loaded from environment variables (site, email, token - token never exposed)
