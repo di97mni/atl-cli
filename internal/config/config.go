@@ -12,12 +12,19 @@ type Config struct {
 	Token string // API token (never log this)
 }
 
+// Environment variable names
+const (
+	EnvSite  = "ATL_CLI_SITE"
+	EnvEmail = "ATL_CLI_EMAIL"
+	EnvToken = "ATL_CLI_TOKEN"
+)
+
 // LoadFromEnv loads configuration from environment variables
 func LoadFromEnv() (*Config, error) {
 	cfg := &Config{
-		Site:  os.Getenv("ATLASSIAN_SITE"),
-		Email: os.Getenv("ATLASSIAN_EMAIL"),
-		Token: os.Getenv("ATLASSIAN_TOKEN"),
+		Site:  os.Getenv(EnvSite),
+		Email: os.Getenv(EnvEmail),
+		Token: os.Getenv(EnvToken),
 	}
 
 	return cfg, nil
@@ -26,13 +33,13 @@ func LoadFromEnv() (*Config, error) {
 // Validate checks that all required configuration is present
 func (c *Config) Validate() error {
 	if c.Site == "" {
-		return errors.New("ATLASSIAN_SITE environment variable is required")
+		return errors.New(EnvSite + " environment variable is required")
 	}
 	if c.Email == "" {
-		return errors.New("ATLASSIAN_EMAIL environment variable is required")
+		return errors.New(EnvEmail + " environment variable is required")
 	}
 	if c.Token == "" {
-		return errors.New("ATLASSIAN_TOKEN environment variable is required")
+		return errors.New(EnvToken + " environment variable is required")
 	}
 	return nil
 }
