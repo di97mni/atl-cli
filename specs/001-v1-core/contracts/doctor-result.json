@@ -1,0 +1,46 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/martin/atl-cli/schemas/doctor-result.json",
+  "title": "DoctorResult",
+  "description": "Health check results from atl-cli doctor",
+  "type": "object",
+  "required": ["status", "checks"],
+  "properties": {
+    "status": {
+      "type": "string",
+      "enum": ["ok", "error"],
+      "description": "Overall status"
+    },
+    "checks": {
+      "type": "array",
+      "description": "Array of individual check results",
+      "items": {
+        "$ref": "#/$defs/Check"
+      },
+      "minItems": 1
+    }
+  },
+  "additionalProperties": false,
+  "$defs": {
+    "Check": {
+      "type": "object",
+      "required": ["name", "status"],
+      "properties": {
+        "name": {
+          "type": "string",
+          "description": "Check name (e.g., ATLASSIAN_SITE, jira_connectivity)"
+        },
+        "status": {
+          "type": "string",
+          "enum": ["ok", "missing", "error"],
+          "description": "Check status"
+        },
+        "message": {
+          "type": "string",
+          "description": "Additional details (only on error/missing)"
+        }
+      },
+      "additionalProperties": false
+    }
+  }
+}
