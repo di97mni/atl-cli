@@ -1,0 +1,38 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/martin/atl-cli/schemas/confluence-page.json",
+  "title": "ConfluencePage",
+  "description": "Confluence page returned by atl-cli confluence page get",
+  "type": "object",
+  "required": ["id", "title", "spaceKey", "version", "updated", "body"],
+  "properties": {
+    "id": {
+      "type": "string",
+      "description": "Page ID (numeric string)",
+      "pattern": "^[0-9]+$"
+    },
+    "title": {
+      "type": "string",
+      "description": "Page title"
+    },
+    "spaceKey": {
+      "type": "string",
+      "description": "Space ID (numeric, from Confluence v2 API)"
+    },
+    "version": {
+      "type": "integer",
+      "minimum": 1,
+      "description": "Version number"
+    },
+    "updated": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 last modified timestamp"
+    },
+    "body": {
+      "type": "string",
+      "description": "Body content in storage format (XHTML-like markup)"
+    }
+  },
+  "additionalProperties": false
+}

@@ -1,0 +1,51 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/martin/atl-cli/schemas/jira-issue.json",
+  "title": "JiraIssue",
+  "description": "Jira issue returned by atl-cli jira issue get",
+  "type": "object",
+  "required": ["key", "summary", "status", "created", "updated", "description", "url"],
+  "properties": {
+    "key": {
+      "type": "string",
+      "description": "Issue key (e.g., PROJ-123)",
+      "pattern": "^[A-Z][A-Z0-9]+-[0-9]+$"
+    },
+    "summary": {
+      "type": "string",
+      "description": "Issue title/summary"
+    },
+    "status": {
+      "type": "string",
+      "description": "Current status name"
+    },
+    "assignee": {
+      "type": ["string", "null"],
+      "description": "Assignee display name (null if unassigned)"
+    },
+    "priority": {
+      "type": ["string", "null"],
+      "description": "Priority name (null if not set)"
+    },
+    "created": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 creation timestamp"
+    },
+    "updated": {
+      "type": "string",
+      "format": "date-time",
+      "description": "ISO 8601 last update timestamp"
+    },
+    "description": {
+      "type": "string",
+      "description": "Plain text description (empty string if none)"
+    },
+    "url": {
+      "type": "string",
+      "format": "uri",
+      "description": "Browse URL for the issue"
+    }
+  },
+  "additionalProperties": false
+}

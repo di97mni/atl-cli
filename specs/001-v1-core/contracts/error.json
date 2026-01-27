@@ -1,0 +1,43 @@
+{
+  "$schema": "https://json-schema.org/draft/2020-12/schema",
+  "$id": "https://github.com/martin/atl-cli/schemas/error.json",
+  "title": "ErrorResponse",
+  "description": "Standard error response for all atl-cli commands",
+  "type": "object",
+  "required": ["error", "message"],
+  "properties": {
+    "error": {
+      "type": "string",
+      "description": "Error type code",
+      "enum": [
+        "config_error",
+        "validation_error",
+        "auth_error",
+        "permission_error",
+        "not_found",
+        "rate_limit",
+        "timeout",
+        "server_error",
+        "unknown_error"
+      ]
+    },
+    "message": {
+      "type": "string",
+      "description": "Human-readable error message"
+    },
+    "retryAfter": {
+      "type": "integer",
+      "minimum": 0,
+      "description": "Seconds to wait before retrying (only for rate_limit errors)"
+    }
+  },
+  "additionalProperties": false,
+  "if": {
+    "properties": {
+      "error": { "const": "rate_limit" }
+    }
+  },
+  "then": {
+    "required": ["error", "message", "retryAfter"]
+  }
+}
