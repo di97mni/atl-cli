@@ -63,3 +63,41 @@ func (p *Page) Write(w interface{ Write([]byte) (int, error) }) error {
 	encoder.SetIndent("", "  ")
 	return encoder.Encode(p)
 }
+
+// WriteMarkdown writes the page as JSON with the body converted to Markdown.
+func (p *Page) WriteMarkdown(w interface{ Write([]byte) (int, error) }) error {
+	markdown, err := ToMarkdown(p.Body)
+	if err != nil {
+		return fmt.Errorf("failed to convert body to markdown: %w", err)
+	}
+
+	// Create a copy with converted body
+	converted := &Page{
+		ID:       p.ID,
+		Title:    p.Title,
+		SpaceKey: p.SpaceKey,
+		Version:  p.Version,
+		Updated:  p.Updated,
+		Body:     markdown,
+	}
+
+	encoder := json.NewEncoder(w)
+	encoder.SetIndent("", "  ")
+	return encoder.Encode(converted)
+}
+
+// WriteBodyOnly writes just the Markdown body without JSON wrapper.
+func (p *Page) WriteBodyOnly(w interface{ Write([]byte) (int, error) }) error {
+	markdown, err := ToMarkdown(p.Body)
+	if err != nil {
+		return fmt.Errorf("failed to convert body to markdown: %w", err)
+	}
+
+	_, err = w.Write([]byte(markdown))
+	if err != nil {
+		return err
+	}
+	// Add a trailing newline for cleaner output
+	_, err = w.Write([]byte("\n"))
+	return err
+}

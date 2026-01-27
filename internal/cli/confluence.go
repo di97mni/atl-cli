@@ -10,6 +10,8 @@ import (
 	"github.com/spf13/cobra"
 )
 
+var pageFormat string
+
 var confluenceCmd = &cobra.Command{
 	Use:   "confluence",
 	Short: "Confluence commands",
@@ -56,8 +58,17 @@ var confluencePageGetCmd = &cobra.Command{
 			})
 		}
 
-		// Output page as JSON
-		return page.Write(os.Stdout)
+		// Output page based on format
+		switch pageFormat {
+		case "json":
+			return page.Write(os.Stdout)
+		case "markdown":
+			return page.WriteMarkdown(os.Stdout)
+		case "body-only":
+			return page.WriteBodyOnly(os.Stdout)
+		default:
+			return outputError(httpclient.NewValidationError("invalid format: " + pageFormat + " (valid: json, markdown, body-only)"))
+		}
 	},
 }
 
@@ -65,4 +76,7 @@ func init() {
 	rootCmd.AddCommand(confluenceCmd)
 	confluenceCmd.AddCommand(confluencePageCmd)
 	confluencePageCmd.AddCommand(confluencePageGetCmd)
+
+	confluencePageGetCmd.Flags().StringVar(&pageFormat, "format", "json",
+		"Output format: json (default), markdown, body-only")
 }
