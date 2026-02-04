@@ -1,7 +1,9 @@
 package jira
 
 import (
+	"bytes"
 	"context"
+	"encoding/json"
 	"fmt"
 	"io"
 	"net/http"
@@ -98,4 +100,63 @@ func (c *Client) handleError(resp *http.Response) error {
 // SetHTTPClient sets the underlying HTTP client (for testing).
 func (c *Client) SetHTTPClient(httpClient *http.Client) {
 	c.httpClient.SetHTTPClient(httpClient)
+}
+
+// CreateIssue creates a new Jira issue.
+func (c *Client) CreateIssue(ctx context.Context, req *CreateIssueRequest) (*CreatedIssue, error) {
+	// Validate project key
+	if err := ValidateProjectKey(req.Fields.Project.Key); err != nil {
+		return nil, err
+	}
+
+	// Validate parent key if present (for sub-tasks)
+	if req.Fields.Parent != nil {
+		if err := ValidateIssueKey(req.Fields.Parent.Key); err != nil {
+			return nil, fmt.Errorf("invalid parent key: %w", err)
+		}
+	}
+
+	// Serialize request body
+	body, err := json.Marshal(req)
+	if err != nil {
+		return nil, fmt.Errorf("failed to marshal request: %w", err)
+	}
+
+	// Build request URL
+	url := fmt.Sprintf("%s/rest/api/3/issue", c.cfg.BaseURL())
+
+	httpReq, err := c.httpClient.NewRequest(ctx, "POST", url, bytes.NewReader(body))
+	if err != nil {
+		return nil, fmt.Errorf("failed to create request: %w", err)
+	}
+
+	resp, err := c.httpClient.Do(httpReq)
+	if err != nil {
+		if ctx.Err() == context.DeadlineExceeded {
+			return nil, fmt.Errorf("request timed out")
+		}
+		return nil, fmt.Errorf("request failed: %w", err)
+	}
+	defer resp.Body.Close()
+
+	// Handle error responses
+	if resp.StatusCode != http.StatusCreated {
+		return nil, c.handleError(resp)
+	}
+
+	// Read and parse response
+	respBody, err := io.ReadAll(resp.Body)
+	if err != nil {
+		return nil, fmt.Errorf("failed to read response: %w", err)
+	}
+
+	var createResp CreateIssueResponse
+	if err := json.Unmarshal(respBody, &createResp); err != nil {
+		return nil, fmt.Errorf("failed to parse response: %w", err)
+	}
+
+	return &CreatedIssue{
+		Key: createResp.Key,
+		URL: fmt.Sprintf("https://%s/browse/%s", c.cfg.Site, createResp.Key),
+	}, nil
 }

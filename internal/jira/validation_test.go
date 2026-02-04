@@ -39,3 +39,36 @@ func TestValidateIssueKey(t *testing.T) {
 		})
 	}
 }
+
+func TestValidateProjectKey(t *testing.T) {
+	tests := []struct {
+		name    string
+		key     string
+		wantErr bool
+	}{
+		// Valid keys
+		{"simple key", "PROJ", false},
+		{"single letter", "A", false},
+		{"with numbers", "TEST123", false},
+		{"long key", "VERYLONGPROJECT", false},
+		{"two letters", "AB", false},
+
+		// Invalid keys
+		{"empty string", "", true},
+		{"lowercase", "proj", true},
+		{"mixed case", "Proj", true},
+		{"starts with number", "1PROJ", true},
+		{"with dash", "PROJ-123", true},
+		{"with space", "PROJ 123", true},
+		{"special characters", "PROJ!", true},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			err := ValidateProjectKey(tt.key)
+			if (err != nil) != tt.wantErr {
+				t.Errorf("ValidateProjectKey(%q) error = %v, wantErr %v", tt.key, err, tt.wantErr)
+			}
+		})
+	}
+}
