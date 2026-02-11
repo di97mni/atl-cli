@@ -11,7 +11,7 @@ Auto-generated from all feature plans. Last updated: 2026-01-26
 ```text
 cmd/atl-cli/          # Main entry point
 internal/
-  cli/                # Cobra commands (root, jira, confluence, doctor)
+  cli/                # Cobra commands (root, jira, confluence, doctor, issue create)
   config/             # Environment variable loading and validation
   httpclient/         # Shared HTTP client with auth, debug, error handling
   jira/               # Jira REST API v3 client
@@ -74,10 +74,19 @@ client := jira.NewClient(cfg, false)
 client.SetHTTPClient(server.Client())
 ```
 
+## Jira Issue Create
+
+The `jira issue create` command supports flags (`--project`, `--type`, `--summary`, `--description`, `--parent`, `--labels`) and a template system (`--template`, `--var`).
+
+Templates use YAML frontmatter (`version: 1` required) with Go `text/template` syntax in body. CLI flags override template values.
+
+Valid issue types: `story`, `subtask`, `task`, `bug`. Subtasks require `--parent`.
+
 ## Recent Changes
 
 - 001-v1-core: Implemented Jira, Confluence, and Doctor commands
 - Changed env vars from `ATLASSIAN_*` to `ATL_CLI_*` prefix
+- Added `jira issue create` command with template support
 
 <!-- MANUAL ADDITIONS START -->
 <!-- MANUAL ADDITIONS END -->

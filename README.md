@@ -1,12 +1,12 @@
 # atl-cli
 
-A lightweight, agent-friendly CLI for Atlassian Cloud that supports querying Jira issues and Confluence pages.
+A lightweight, agent-friendly CLI for Atlassian Cloud that supports creating and querying Jira issues and Confluence pages.
 
 All output is JSON to stdout, errors to stderr.
 
 ## Features
 
-- **Jira**: Retrieve issue details by key
+- **Jira**: Create and retrieve issues, with template support
 - **Confluence**: Retrieve page content by ID
 - **Doctor**: Validate configuration and test API connectivity
 - **Debug mode**: Request/response logging with redacted credentials
@@ -113,6 +113,93 @@ Output:
 }
 ```
 
+### Create a Jira issue
+
+```bash
+atl-cli jira issue create \
+  --project CST \
+  --type story \
+  --summary "Add dark mode support" \
+  --description "Implement a dark mode toggle in user settings" \
+  --labels "ui,enhancement"
+```
+
+Output:
+```json
+{
+  "key": "CST-456",
+  "url": "https://acme.atlassian.net/browse/CST-456"
+}
+```
+
+### Create a sub-task
+
+```bash
+atl-cli jira issue create \
+  --project CST \
+  --type subtask \
+  --summary "Update color tokens" \
+  --parent CST-456
+```
+
+### Using templates
+
+Templates let you define reusable issue patterns. A template file uses YAML frontmatter for metadata and a Markdown body for the description, with Go `text/template` variable syntax.
+
+Example template file (`bug-report.tmpl`):
+
+```yaml
+---
+version: 1
+project: CST
+issueType: bug
+summary: "Bug: {{.component}} - {{.title}}"
+labels:
+  - bug
+  - "{{.component}}"
+---
+## Steps to reproduce
+
+{{.steps}}
+
+## Expected behavior
+
+{{.expected}}
+
+## Actual behavior
+
+{{.actual}}
+```
+
+Use the template with `--template` and `--var` flags:
+
+```bash
+atl-cli jira issue create \
+  --template bug-report.tmpl \
+  --var component=auth \
+  --var title="login fails on expired token" \
+  --var steps="1. Let token expire\n2. Click login" \
+  --var expected="Token refreshes automatically" \
+  --var actual="401 error shown to user"
+```
+
+CLI flags override template values when both are provided. For example, `--labels "urgent"` would replace the labels defined in the template.
+
+### Create command flags
+
+| Flag | Description | Required |
+|------|-------------|----------|
+| `--project` | Project key (e.g., CST) | Yes* |
+| `--type` | Issue type: story, subtask, task, bug | Yes* |
+| `--summary` | Issue title | Yes* |
+| `--description` | Plain text description | No |
+| `--parent` | Parent issue key (required for subtask) | Conditional |
+| `--labels` | Comma-separated labels | No |
+| `--template` | Path to template file | No |
+| `--var` | Template variable key=value (repeatable) | No |
+
+\* Can be provided by template instead of flag.
+
 ### Get a Confluence page
 
 ```bash
@@ -151,6 +238,7 @@ atl-cli --help
 atl-cli jira --help
 atl-cli jira issue --help
 atl-cli jira issue get --help
+atl-cli jira issue create --help
 atl-cli confluence --help
 atl-cli confluence page --help
 atl-cli doctor --help
