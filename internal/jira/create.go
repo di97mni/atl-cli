@@ -62,53 +62,38 @@ type ADFDoc struct {
 	Content []ADFNode `json:"content"`
 }
 
-// ADFNode represents a node in an ADF document.
-type ADFNode struct {
-	Type    string    `json:"type"`
-	Content []ADFNode `json:"content,omitempty"`
-	Text    string    `json:"text,omitempty"`
+// ADFMark represents an inline formatting mark on a text node.
+type ADFMark struct {
+	Type  string                 `json:"type"`
+	Attrs map[string]interface{} `json:"attrs,omitempty"`
 }
 
-// TextToADF converts plain text to an Atlassian Document Format document.
-// It splits the text by double newlines into paragraphs.
+// ADFNode represents a node in an ADF document.
+type ADFNode struct {
+	Type    string                 `json:"type"`
+	Attrs   map[string]interface{} `json:"attrs,omitempty"`
+	Content []ADFNode              `json:"content,omitempty"`
+	Text    string                 `json:"text,omitempty"`
+	Marks   []ADFMark              `json:"marks,omitempty"`
+}
+
+// TextToADF converts markdown text to an Atlassian Document Format document.
+// It supports headings, bold, italic, lists, code blocks, and links.
 func TextToADF(text string) *ADFDoc {
 	if text == "" {
 		return nil
 	}
 
-	doc := &ADFDoc{
-		Type:    "doc",
-		Version: 1,
-		Content: []ADFNode{},
-	}
-
-	// Split into paragraphs by double newlines
-	paragraphs := strings.Split(text, "\n\n")
-	for _, para := range paragraphs {
-		para = strings.TrimSpace(para)
-		if para == "" {
-			continue
-		}
-
-		// Replace single newlines with space within paragraphs
-		para = strings.ReplaceAll(para, "\n", " ")
-
-		doc.Content = append(doc.Content, ADFNode{
-			Type: "paragraph",
-			Content: []ADFNode{
-				{
-					Type: "text",
-					Text: para,
-				},
-			},
-		})
-	}
-
-	if len(doc.Content) == 0 {
+	nodes := ParseMarkdownToADFNodes(text)
+	if len(nodes) == 0 {
 		return nil
 	}
 
-	return doc
+	return &ADFDoc{
+		Type:    "doc",
+		Version: 1,
+		Content: nodes,
+	}
 }
 
 // IssueTypeNameMap maps CLI type names to Jira issue type names.
